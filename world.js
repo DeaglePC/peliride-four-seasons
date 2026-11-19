@@ -2,6 +2,7 @@ import * as T from 'three';
 import {createRider} from './models/rider.js';
 import {createLandscape} from './models/landscape.js';
 import {createTraffic} from './models/traffic.js';
+import {createTrafficReflections} from './models/traffic-reflections.js';
 import {createCoastEncounter} from './models/coast-encounter.js';
 import {atmosphere} from './atmosphere.js';
 import {buildRoad} from './road.js';
@@ -11,6 +12,7 @@ export function createWorld(canvas){
  const renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.04;
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(46,1,.09,450);const rider=createRider(T);scene.add(rider.group);
  const ground=buildRoad(scene,renderer,roadX),scenery=createLandscape(T,scene),traffic=createTraffic(T,scene),atmos=atmosphere(scene,camera,renderer);
+ const updateReflections=createTrafficReflections(renderer,traffic.setReflection);
  const coast=createCoastEncounter(T,scene,roadX,traffic.laneOpenForFish);
  const lamp=new T.SpotLight(0xffe8ba,0,38,.34,.61,1.65);lamp.position.set(0,1.15,-.88);lamp.target.position.set(0,.01,-12);rider.bicycle.add(lamp,lamp.target);
  const shadowC=document.createElement('canvas');shadowC.width=shadowC.height=64;const ctx=shadowC.getContext('2d'),g=ctx.createRadialGradient(32,32,1,32,32,31);g.addColorStop(0,'#1a271abe');g.addColorStop(.5,'#26332778');g.addColorStop(1,'#25332500');ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
@@ -29,6 +31,7 @@ export function createWorld(canvas){
    shadow.visible=!crash;shadow.position.set(rx,.043,0);shadow.rotation.x=rider.group.rotation.x;shadow.rotation.y=rider.group.rotation.y;
    rider.update(mode==='pause'||mode==='result'?0:dt,{speed:home?1.2:speed,time,steer,brake,crash,gape:coast.gape,swallow:coast.swallow});
    const {night,wet}=atmos({time,dt,weather,riderX:rx,distance});
+   updateReflections(distance,night,wet,weather,dt);
    const e=traffic.update({distance,dt,time,speed,riderX:rx,roadX,night,wet,playing:moving,detectHits:mode==='ride'&&state.grace<=0});
    const fishing=coast.update(state,dt,rider.beak,e.impact);
    e.fishLane=fishing.lane;e.caught=fishing.caught;

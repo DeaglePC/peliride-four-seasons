@@ -14,7 +14,11 @@
 
 ![游戏车模前侧视图，上排为 Model S、Model 3、Model X，下排为 Model Y、Cybertruck、Roadster。](docs/media/tesla-traffic.jpg)
 
-六款车都在双向车流里出现。白天可以从轮廓认车，夜里可以看灯：Model 3 是两枚细长的独立前灯，焕新版 Model Y 用贯穿灯带，Cybertruck 的平直车头和货斗从远处就能认出来。会变道的车会提前打转向灯；会车时，车身更宽的 Cybertruck 也确实需要多留一点横向间距。
+六款车都在双向车流里出现。Model 3 采用 19 英寸 Nova 轮圈，透过辐条能看到随轮转动的刹车盘，以及固定在轮轴旁的卡钳。会车时，宽车身的 Cybertruck 需要多留一点横向间距。
+
+入夜后可以靠灯组认车。焕新版 Model Y 的红光从尾门上沿向下铺开，Cybertruck 的投光灯藏在贯穿日行灯下方，Roadster 的前灯盖会下翻露出透镜。车漆、钢板和玻璃取景自骑行路线，林道里的树影和城市的窗灯都能映在车身上。
+
+[![同机位细节对照。左列是上一版，右列依次展示新版 Model 3 的 Nova 轮圈、Model S 前灯透镜和 Model Y 间接式尾灯。](docs/media/tesla-details.jpg)](docs/media/tesla-details.jpg)
 
 上图直接渲染自游戏模型。车身曲面、轮拱、车窗和轮圈均按 Tesla 官方外观资料独立建模，Roadster 采用官网展示车的造型。Blender 文件里六款车分别编组，四个车轮都有独立转轴。[下载可编辑的 Blender 车模合集](https://github.com/DeaglePC/peliride-four-seasons/raw/refs/heads/main/assets/traffic/tesla-fleet.blend?download=1) · [官方车型参考](assets/traffic/credits.txt)
 

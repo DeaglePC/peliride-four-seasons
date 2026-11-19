@@ -1,6 +1,7 @@
 // Original game geometry, eye-modelled against Tesla's current exterior photos.
 // https://www.tesla.cn/cybertruck and https://www.tesla.cn/roadster
 import {bodyShell,box,deckPoint,line,panel,shellProfile,sidePoint,surface} from './tesla-tools.js';
+import {mergeParts} from './tesla-wheels.js';
 
 const mix=(a,b,t)=>a+(b-a)*t;
 function blend(a,b,t){return a.map((v,i)=>mix(v,b[i],t));}
@@ -29,6 +30,73 @@ function linear(rows,z,index){
   return rows.at(-1)[index];
 }
 
+// Optical light guides have a front face, a polished return and a separate
+// curved cover. Their cross sections continue around the bends at the corners.
+function lightGuide(ctx,path,sign,material,height,depth,lift=0,yOffset=0){
+  const verts=[],idx=[],ring=ctx.detailed?10:6;
+  for(let i=0;i<path.length;i++){
+    const a=path[Math.max(0,i-1)],b=path[Math.min(path.length-1,i+1)],p=path[i];
+    const length=Math.hypot(b[0]-a[0],b[2]-a[2])||1;
+    const nx=-(b[2]-a[2])/length*sign,nz=(b[0]-a[0])/length*sign;
+    for(let j=0;j<ring;j++){
+      const angle=2*Math.PI*j/ring,d=lift+Math.cos(angle)*depth*.5;
+      verts.push([p[0]+nx*d,p[1]+yOffset+Math.sin(angle)*height*.5,p[2]+nz*d]);
+      if(i){const k=(i-1)*ring+j,l=(i-1)*ring+(j+1)%ring;idx.push(k,k+ring,l,l,k+ring,l+ring);}
+    }
+  }
+  if(sign<0)for(let i=0;i<idx.length;i+=3)[idx[i+1],idx[i+2]]=[idx[i+2],idx[i+1]];
+  return surface(ctx,material,verts,idx);
+}
+function blade(ctx,path,sign,tail,housingHeight,guideHeight){
+  const {m,detailed}=ctx;
+  lightGuide(ctx,path,sign,m.lampHousing,housingHeight,.032);
+  if(detailed)lightGuide(ctx,path,sign,m.reflector,guideHeight*1.42,.009,.014,-guideHeight*.12);
+  lightGuide(ctx,path,sign,tail?m.rear:m.front,guideHeight,.011,.022);
+  if(detailed)lightGuide(ctx,path,sign,tail?m.rearLens:m.opticLens,housingHeight*.82,.021,.026);
+}
+
+// A cutaway projector: a dark bezel, a polished tapered reflector, a convex
+// optical element and a small emitter. On an unlit car the lens remains dark.
+function projector(ctx,x,y,z,rx,ry){
+  const {m}=ctx,verts=[],indices=[],n=16;
+  const rings=[[1.17,.005],[1,0],[.78,.010]];
+  for(let r=0;r<rings.length;r++)for(let i=0;i<n;i++){
+    const a=i/n*Math.PI*2;
+    verts.push([x+Math.cos(a)*rx*rings[r][0],y+Math.sin(a)*ry*rings[r][0],z+rings[r][1]]);
+    if(r){const k=(r-1)*n+i,l=(r-1)*n+(i+1)%n;indices.push(k,l,k+n,k+n,l,l+n);}
+  }
+  surface(ctx,m.reflector,verts,indices);
+  patch(ctx,m.projector,(u,v)=>{const a=u*2*Math.PI,r=.995*(1-v);
+    return [x+Math.cos(a)*rx*r,y+Math.sin(a)*ry*r,z-.012*Math.sqrt(Math.max(0,1-r*r))];},[0,0,-1],16,5);
+  const chip=box(ctx,m.front,[x,y-.09*ry,z-.013],[rx*.74,ry*.24,.004],.0015);
+  chip.name='Projector light source';
+}
+
+// The outer edge of the Cybertruck nose folds back in plan. Applying the same
+// fold to the steel panels, bumper and front lighting keeps the joints flush.
+function truckNosePoint(p,front){
+  const near=Math.max(0,Math.min(1,(front+.47-p[2])/.43));
+  const corner=Math.max(0,Math.abs(p[0])-.61)*.44;
+  const rake=Math.max(0,.938-p[1])*.095;
+  return [p[0],p[1],p[2]+near*(corner+rake)];
+}
+function foldNose(ctx,first,front){
+  const p=new ctx.T.Vector3(),inv=new ctx.T.Matrix4();
+  for(const mesh of ctx.group.children.slice(first)){
+    if(!mesh.isMesh)continue;
+    mesh.updateMatrix();inv.copy(mesh.matrix).invert();
+    const pos=mesh.geometry.attributes.position;
+    let changed=false;
+    for(let i=0;i<pos.count;i++){
+      p.fromBufferAttribute(pos,i).applyMatrix4(mesh.matrix);
+      if(p.z>=front+.47)continue;
+      p.fromArray(truckNosePoint(p.toArray(),front)).applyMatrix4(inv);
+      pos.setXYZ(i,p.x,p.y,p.z);changed=true;
+    }
+    if(changed){pos.needsUpdate=true;mesh.geometry.computeVertexNormals();}
+  }
+}
+
 const cybertruck={
   name:'Cybertruck',width:2.20,length:5.683,height:1.795,wheelRadius:.445,wheelbase:3.635,axleMid:.001,
   track:1.870,paints:[0xa5aaab],spokes:7,build:truckBody
@@ -40,7 +108,7 @@ const roadster={
 export const specials={cybertruck,roadster};
 
 function truckBody(ctx){
-  const {m,detailed}=ctx,half=cybertruck.length/2;
+  const {m,detailed}=ctx,half=cybertruck.length/2,first=ctx.group.children.length;
   const axle=cybertruck.wheelbase/2,mid=cybertruck.axleMid;
   // z, half width, shoulder height, roof or sail height. The long straight
   // windshield and descending sail rails meet at a single steel ridge.
@@ -93,7 +161,7 @@ function truckBody(ctx){
       }
       const lo=.115,hi=.94;
       facing(ctx,m.steel,[edge(a,0),edge(b,0),edge(b,lo),edge(a,lo)],[s,0,0]);
-      facing(ctx,m.glass,[edge(a,lo),edge(b,lo),edge(b,hi),edge(a,hi)],[s,.1,0]);
+      facing(ctx,a>=-.34?m.privacyGlass:m.glass,[edge(a,lo),edge(b,lo),edge(b,hi),edge(a,hi)],[s,.1,0]);
       facing(ctx,m.steel,[edge(a,hi),edge(b,hi),edge(b,1),edge(a,1)],[s,.1,0]);
     }
     const z0=-.32;
@@ -120,7 +188,11 @@ function truckBody(ctx){
   // Steel hood, windshield with a thick frit surround, glass roof and the
   // retractable vault cover. The tonneau blades run across, between the sails.
   for(const [a,b] of [[-half,-2.63],[-2.63,-1.97]]){
-    facing(ctx,m.steel,[cap(-1,a),cap(1,a),cap(1,b),cap(-1,b)],[0,1,-.15]);
+    const across=[-1,-.66,0,.66,1];
+    for(let i=1;i<across.length;i++){
+      const l=across[i-1],r=across[i];
+      facing(ctx,m.steel,[cap(l,a),cap(r,a),cap(r,b),cap(l,b)],[0,1,-.15]);
+    }
   }
   const glass=(z,w,up=0)=>[capX(z)*w,ridge(z)+up,z];
   function topZone(a,b,mat,edge=.942){
@@ -138,13 +210,24 @@ function truckBody(ctx){
   const front=-half,rear=half;
   for(const [z,sign] of [[front,-1],[rear,1]]){
     const w=width(z),facet=(u,y,depth=0)=>[u*w,y,z+sign*depth];
-    facing(ctx,m.steel,[facet(-1,.365),facet(1,.365),facet(1,belt(z)),facet(-1,belt(z))],[0,0,sign]);
-    facing(ctx,m.trim,[facet(-1,.515,.016),facet(1,.515,.016),facet(.87,.281,.013),facet(-.87,.281,.013)],[0,0,sign]);
+    const xs=[-1,-.66,0,.66,1];
+    for(let i=1;i<xs.length;i++){
+      const a=xs[i-1],b=xs[i],top=sign<0?.691:.365;
+      facing(ctx,m.steel,[facet(a,top),facet(b,top),facet(b,belt(z)),facet(a,belt(z))],[0,0,sign]);
+      if(sign<0){
+        facing(ctx,m.lampHousing,[facet(a,.547,-.036),facet(b,.547,-.036),facet(b,.691,-.036),facet(a,.691,-.036)],[0,0,-1]);
+        facing(ctx,m.metal,[facet(a,.691),facet(b,.691),facet(b,.691,-.036),facet(a,.691,-.036)],[0,-1,0]);
+        facing(ctx,m.trim,[facet(a,.548,.011),facet(b,.548,.011),facet(b,.547,-.036),facet(a,.547,-.036)],[0,1,0]);
+      }
+      const seam=sign<0?.548:.515;
+      facing(ctx,m.trim,[facet(a,seam,.016),facet(b,seam,.016),facet(b*.87,.281,.013),facet(a*.87,.281,.013)],[0,0,sign]);
+    }
     facing(ctx,m.black,[facet(-.7,.385,.019),facet(.7,.385,.019),facet(.63,.282,.016),facet(-.63,.282,.016)],[0,0,sign]);
   }
-  const strip=(mat,z,y,h,w)=>box(ctx,mat,[0,y,z],[w,h,.029],.006);
-  strip(m.black,front-.004,.919,.073,1.834);strip(m.front,front-.022,.933,.025,1.803);
-  strip(m.black,rear+.006,1.19,.092,1.862);strip(m.rear,rear+.025,1.205,.027,1.82);
+  const truckBrow=[[-.919,.938,front+.009],[-.840,.931,front+.004],[-.607,.927,front],[0,.927,front],[.607,.927,front],[.840,.931,front+.004],[.919,.938,front+.009]];
+  blade(ctx,truckBrow,-1,false,.060,.027);
+  // The liftgate bar and two body-mounted rear clusters are separate units.
+  blade(ctx,[[-.782,1.196,rear+.006],[0,1.196,rear+.008],[.782,1.196,rear+.006]],1,true,.070,.024);
   for(const s of [-1,1]){
     const upper=[[s*.84,.496,front-.028],[s*.993,.504,front+.221],[s*1.004,.498,front+.291]],
       lowerBumper=[[s*.793,.298,front-.017],[s*.948,.282,front+.205],[s*.970,.302,front+.292]];
@@ -152,19 +235,144 @@ function truckBody(ctx){
       [s*.970,.302,front+.292],[s*.948,.282,front+.205]],[s,0,-.6]);
     for(let j=1;j<upper.length;j++)facing(ctx,m.trim,[upper[j-1],upper[j],lowerBumper[j],lowerBumper[j-1]],[s,0,-.4]);
     facing(ctx,m.black,[upper[0],upper[1],side(s,front+.231,.476),side(s,front,.468)],[0,1,-.4]);
-    box(ctx,m.black,[s*.774,.610,front-.007],[.238,.081,.031],.010);
-    box(ctx,m.front,[s*.774,.624,front-.028],[.177,.027,.022],.005);
-    line(ctx,m.amber,[[s*.928,.931,front+.016],[s*.976,.948,front+.155]],.011);
-    line(ctx,m.rear,[[s*.925,1.200,rear-.004],[s*.97,1.215,rear-.096]],.013);
+    facing(ctx,m.trim,[side(s,front,.504,.016),side(s,front+.225,.504,.015),side(s,front+.30,.483,.014),
+      side(s,front+.29,.304,.014),side(s,front+.18,.285,.011),side(s,front,.308,.014)],[s,0,0]);
+    const chart=(x,y,d)=>[s*x,y,front-d];
+    const bezel2=[[.266,.571],[.291,.656],[.800,.669],[.926,.652],[.911,.571],[.849,.554],[.31,.553]];
+    const face=(loop,depth)=>loop.map(([x,y])=>chart(x,y,depth));
+    const scaled=(u,v)=>bezel2.map(([x,y])=>[mix(.596,x,u),mix(.609,y,v)]);
+    const outside=face(bezel2,.004),rim=face(scaled(.979,.86),.011),throat=face(scaled(.94,.70),-.026);
+    for(let j=0;j<outside.length;j++){
+      const k=(j+1)%outside.length;
+      facing(ctx,m.black,[outside[j],outside[k],rim[k],rim[j]],[0,0,-1]);
+      facing(ctx,m.lampHousing,[rim[j],rim[k],throat[k],throat[j]],[0,0,-1]);
+    }
+    facing(ctx,m.lampHousing,throat,[0,0,-1]);
+    if(detailed){
+      for(const x of [.383,.530,.667]){
+        const cell=box(ctx,m.reflector,chart(x,.607,-.011),[.121,.060,.016],.012);cell.rotation.z=-s*.022;
+        box(ctx,m.lampHousing,chart(x,.607,.000),[.110,.054,.010],.008);
+        projector(ctx,s*x,.610,front-.007,.046,.021);
+      }
+      for(const x of [.770,.830]){
+        const prism=box(ctx,m.reflector,chart(x,.611,-.002),[.049,.053,.019],.004);prism.rotation.y=s*.105;
+        box(ctx,m.front,chart(x,.603,.011),[.034,.013,.004],.002);
+      }
+      patch(ctx,m.opticLens,(u,t)=>chart(mix(.279,.917,u),mix(.562,.653,t)+.010*Math.sin(Math.PI*u),
+        .018+.007*Math.sin(Math.PI*t)),[0,0,-1],12,5);
+      for(const x of [.864,.879,.894])box(ctx,m.amber,chart(x,.613,.017),[.007,.045,.008],.003);
+    }else{
+      lightGuide(ctx,[chart(.36,.612,.009),chart(.82,.612,.009)].sort((a,b)=>a[0]-b[0]),-1,m.front,.023,.010);
+    }
+    const corner=[chart(.916,.935,-.018),chart(.976,.940,-.154)].sort((a,b)=>a[0]-b[0]);
+    lightGuide(ctx,corner,-1,m.amber,.018,.018);
+    const tailPath=[[s*.795,1.196,rear+.005],[s*.901,1.196,rear+.005],
+      [s*.937,1.202,rear-.020],[s*.965,1.212,rear-.108]].sort((a,b)=>a[0]-b[0]);
+    blade(ctx,tailPath,1,true,.072,.029);
+    if(detailed){
+      for(let j=0;j<4;j++)box(ctx,m.rearLens,[s*(.811+j*.022),1.196,rear+.039],[.006,.036,.006],.001);
+      const back=box(ctx,m.reflector,[s*.758,.441,rear+.026],[.118,.036,.018],.007);
+      box(ctx,m.opticLens,[back.position.x,.442,rear+.040],[.125,.046,.010],.004);
+    }
   }
   if(detailed){
-    box(ctx,m.black,[0,.596,rear+.011],[.430,.123,.024],.008);
-    box(ctx,m.metal,[0,.597,rear+.026],[.389,.100,.006],.004);
-    line(ctx,m.trim,[[-.864,.655,rear+.008],[-.863,1.124,rear+.009],[.863,1.124,rear+.009],[.864,.655,rear+.008]],.0055);
-    for(let i=0;i<6;i++)box(ctx,m.black,[.04*(i-2.5),.596,rear+.030],[.015,.037,.006]);
+    const lowerSlot=[[-.491,.384,front-.012],[-.424,.424,front-.012],[.424,.424,front-.012],[.491,.384,front-.012],[.463,.318,front-.012],[-.463,.318,front-.012]];
+    facing(ctx,m.lampHousing,lowerSlot,[0,0,-1]);
+    for(let i=-5;i<=5;i++)box(ctx,m.trim,[i*.074,.370,front-.023],[.014,.072,.012],.002);
+    box(ctx,m.lampHousing,[0,.617,front+.012],[.45,.113,.025],.006);
+    box(ctx,m.projector,[0,.635,front-.007],[.037,.028,.011],.008);
+    // Vertical tailgate shut lines coincide with the break between the fixed
+    // combination lamps and the cross-car lamp in the moving metal panel.
+    for(const s of [-1,1]){
+      line(ctx,m.lampHousing,[[s*.789,1.150,rear+.005],[s*.791,.797,rear+.005],[s*.787,.526,rear+.006]],.0043);
+      line(ctx,m.metal,[[s*.780,1.147,rear+.004],[s*.782,.535,rear+.004]],.0024);
+    }
+    box(ctx,m.lampHousing,[0,.443,rear+.024],[.426,.127,.034],.007);
+    box(ctx,m.metal,[0,.444,rear+.044],[.387,.103,.007],.004);
+    for(let i=0;i<6;i++)box(ctx,m.black,[.04*(i-2.5),.444,rear+.050],[.015,.037,.006]);
+    box(ctx,m.trim,[0,.269,rear+.009],[.110,.094,.115],.007);
+    box(ctx,m.black,[0,.269,rear+.069],[.073,.061,.006],.004);
   }
-  return {headlights:[[-.774,.624,front-.03],[.774,.624,front-.03]],
-    rearSignals:[[-.898,1.206,rear+.026],[.898,1.206,rear+.026]]};
+  foldNose(ctx,first,front);
+  return {headlights:[-.54,.54].map(x=>truckNosePoint([x,.610,front-.025],front)),
+    rearSignals:[[-.858,1.196,rear+.043],[.858,1.196,rear+.043]]};
+}
+
+// Cut the shutter out of the upper skin itself. Intersection vertices carry
+// the original surface normal, so the flush lid matches the surrounding paint.
+function splitLid(T,shell,side,outline){
+  const g=shell.geometry,pos=g.attributes.position,norm=g.attributes.normal;
+  const keep={p:[],n:[]},lid={p:[],n:[]};
+  const area=outline.reduce((v,[x,z],i)=>{const b=outline[(i+1)%outline.length];return v+x*b[1]-z*b[0];},0);
+  function piece(poly,target){
+    for(let j=1;j+1<poly.length;j++)for(const v of [poly[0],poly[j],poly[j+1]]){
+      target.p.push(v[0],v[1],v[2]);target.n.push(v[3],v[4],v[5]);
+    }
+  }
+  for(let i=0,count=g.index?g.index.count:pos.count;i<count;i+=3){
+    let poly=[];
+    for(let j=0;j<3;j++){
+      const k=g.index?g.index.getX(i+j):i+j;
+      poly.push([pos.getX(k),pos.getY(k),pos.getZ(k),norm.getX(k),norm.getY(k),norm.getZ(k)]);
+    }
+    if(poly.every(v=>side*v[0]<.61)||poly.every(v=>side*v[0]>.95)||poly.every(v=>v[2]<-2.36)||poly.every(v=>v[2]>-1.92)||poly.every(v=>v[4]<.43)){
+      piece(poly,keep);continue;
+    }
+    for(let j=0;j<outline.length&&poly.length;j++){
+      const [x,z]=outline[j],[ex,ez]=outline[(j+1)%outline.length];
+      const dist=p=>Math.sign(area)*((ex-x)*(p[2]-z)-(ez-z)*(side*p[0]-x));
+      const inside=[],outside=[];
+      for(let k=0;k<poly.length;k++){
+        const a=poly[k],b=poly[(k+1)%poly.length],da=dist(a),db=dist(b);
+        (da>=0?inside:outside).push(a);
+        if((da>=0)!==(db>=0)){
+          const v=blend(a,b,da/(da-db));inside.push(v);outside.push(v);
+        }
+      }
+      piece(outside,keep);poly=inside;
+    }
+    piece(poly,lid);
+  }
+  function geometry(data){
+    const geom=new T.BufferGeometry();geom.setAttribute('position',new T.Float32BufferAttribute(data.p,3));
+    geom.setAttribute('normal',new T.Float32BufferAttribute(data.n,3));geom.normalizeNormals();return geom;
+  }
+  shell.geometry=geometry(keep);g.dispose();return geometry(lid);
+}
+
+function roadsterHeadlamps(ctx,shell,rows){
+  const {T,m}=ctx,assembly=new T.Group(),stationary=new T.Group();
+  assembly.name='Roadster concealed headlamps';
+  const fixed={...ctx,group:stationary};
+  // Front hinge, shallow triangular door that drops away from a fixed pair of
+  // jewel optics. The notch is narrow at the nose and opens at the front wing.
+  const outline=[[.687,-2.348],[.753,-2.300],[.879,-2.066],[.912,-1.981],[.847,-1.955],[.682,-2.075],[.665,-2.183]];
+  const anchors=[];
+  for(const s of [-1,1]){
+    const profile=(x,z)=>deckPoint(roadster,rows,z,s*x/(shellProfile(roadster,rows,z).width*.992));
+    const cut=outline.map(([x,z])=>profile(x,z));
+    const hinge=profile(.703,-2.350),pivot=new T.Group();pivot.position.fromArray(hinge);
+    pivot.name='Roadster headlamp lid '+(s<0?'L':'R');
+    const flap=new T.Mesh(splitLid(T,shell,s,outline),m.paint);
+    flap.name='Body-colour flush shutter';flap.position.set(-hinge[0],-hinge[1],-hinge[2]);pivot.add(flap);assembly.add(pivot);
+    for(let j=0;j<cut.length;j++){
+      const a=cut[j],b=cut[(j+1)%cut.length];
+      facing(fixed,m.lampHousing,[a,b,[b[0],b[1]-.163,b[2]],[a[0],a[1]-.163,a[2]]],[s,0,-1]);
+    }
+    facing(fixed,m.black,cut.map(([x,y,z])=>[x,y-.163,z]),[0,1,0]);
+    // A single shallow seal catches a restrained highlight when the lid is shut.
+    line(fixed,m.trim,[...cut,cut[0]],.0018);
+    const y=profile(.815,-2.025)[1]-.052,z=-2.029;
+    const backs=box(fixed,m.lampHousing,[s*.816,y,z+.022],[.130,.067,.043],.008);
+    backs.rotation.y=s*.065;
+    projector(fixed,s*.795,y,z,.032,.021);
+    projector(fixed,s*.856,y+.007,z+.011,.022,.018);
+    patch(fixed,m.opticLens,(u,t)=>[s*mix(.757,.885,u),mix(y-.031,y+.038,t)+.007*u,
+      z-.014+.012*u-.004*Math.sin(Math.PI*t)],[0,0,-1],7,3);
+    anchors.push([s*.795,y,z-.017]);
+  }
+  const fields=mergeParts(T,stationary);fields.name='Fixed optics and aperture seals';assembly.add(fields);
+  return {group:assembly,anchors};
 }
 
 function sportsBody(ctx){
@@ -176,7 +384,9 @@ function sportsBody(ctx){
     [-.79,.922,.786,.808,.190],[-.1,.912,.805,.834,.194],[.67,.933,.877,.866,.198],
     [1.12,.967,.931,.878,.200],[1.62,1.005,.946,.890,.209],[1.98,.994,.937,.906,.223],
     [2.24,.954,.889,.887,.259],[half,.910,.848,.854,.307]];
-  bodyShell(ctx,roadster,rows);
+  const shell=bodyShell(ctx,roadster,rows);
+  const rearClosure=ctx.group.children.find(mesh=>mesh.name==='Tail fascia');
+  ctx.group.remove(rearClosure);rearClosure.geometry.dispose();
   const side=(s,z,y,extra=.003)=>sidePoint(roadster,rows,z,y,s,extra);
   const deck=(z,u,lift=.005)=>deckPoint(roadster,rows,z,u,lift);
   // Windshield and rear glass boundaries are bowed across the car. The
@@ -210,7 +420,7 @@ function sportsBody(ctx){
     // Painted sill rises toward the rear, shortening the visible quarter light.
     sidePatch(0,.12,0,1,m.paint);sidePatch(.12,.938,0,.017,m.trim);
     sidePatch(.12,.938,.017,.433,m.glass);sidePatch(.12,.938,.433,.454,m.trim);
-    sidePatch(.12,.938,.454,.793,m.glass);sidePatch(.12,.938,.793,1,m.paint);
+    sidePatch(.12,.938,.454,.793,m.privacyGlass);sidePatch(.12,.938,.793,1,m.paint);
     sidePatch(.938,1,0,1,m.paint);
     patch(ctx,m.paint,(u,t)=>blend(backlight(t,s),greenhouse(s,t,1),u),[s,1,.3],4,steps);
     const frontAxle=roadster.axleMid-roadster.wheelbase/2,rearAxle=roadster.axleMid+roadster.wheelbase/2;
@@ -223,8 +433,10 @@ function sportsBody(ctx){
       const z=mix(1.955,half,u),bottom=shellProfile(roadster,rows,z).archY;
       return side(s,z,mix(bottom,Math.max(bottom+.001,linear(bumperEdge,z,1)),t),.012);
     },[s,0,.1],detailed?26:14,8);
-    const wing=[side(s,-2.22,.232,.003),side(s,-1.98,.28,.005),side(s,-1.98,.172,.005),side(s,-2.22,.15,.001)];
-    facing(ctx,m.trim,wing,[s,0,0]);
+    patch(ctx,m.trim,(u,t)=>{
+      const z=mix(-half,-1.922,u),p=shellProfile(roadster,rows,z);
+      return side(s,z,mix(p.archY,Math.max(p.archY+.001,mix(.214,.268,u)),t),.008);
+    },[s,0,-.15],detailed?22:10,5);
     if(detailed){
       const f=greenhouse(s,.125,.098),b=greenhouse(s,.125,.721);
       line(ctx,m.trim,[f,side(s,-.920,.712,.006),side(s,-.844,.365,.006),side(s,-.75,.327,.006),
@@ -235,7 +447,7 @@ function sportsBody(ctx){
       line(ctx,m.trim,[stalk,[stalk[0]+s*.063,stalk[1]+.017,stalk[2]-.012]],.013);
       const lens=box(ctx,m.paint,[stalk[0]+s*.088,stalk[1]+.024,stalk[2]-.022],[.112,.057,.131],.024);
       lens.rotation.z=-s*.1;
-      line(ctx,m.black,Array.from({length:10},(_,i)=>{const t=i/9;return deck(mix(-2.29,-1.386,t),s*mix(.915,.826,t),.004);}),.0035,true);
+      line(ctx,m.lampHousing,Array.from({length:8},(_,i)=>{const t=i/7;return deck(mix(-1.955,-1.385,t),s*mix(.847/(shellProfile(roadster,rows,-1.955).width*.992),.826,t),.002);}),.0019,true);
     }
   }
   patch(ctx,m.roofGlass,(u,t)=>{
@@ -248,32 +460,97 @@ function sportsBody(ctx){
   }
   const front=-half,rear=half;
   const nose=(x,y,extra=0)=>[x,y,front-extra];
-  facing(ctx,m.black,[nose(-.713,.459,.004),nose(.713,.459,.004),nose(.662,.178,.004),nose(-.662,.178,.004)],[0,0,-1]);
-  box(ctx,m.front,[0,.466,front-.009],[1.398,.019,.026],.006);
-  box(ctx,m.black,[0,.152,front-.014],[1.42,.045,.069],.010);
+  // The body-colour pop-down headlamp doors occupy the fender corners. The
+  // narrow white blade below them is a separate running light, over a bowed
+  // black brow and a deep cooling slot with a moulded lower splitter.
+  patch(ctx,m.lampHousing,(u,t)=>{const q=u*2-1;return nose(q*mix(.673,.711,t),mix(.309,.463,t)-.012*q*q,
+    .009+.021*Math.sin(Math.PI*t)+.011*(1-q*q));},[0,0,-1],detailed?18:8,5);
+  const frontGuide=[[-.702,.459,front-.009],[-.630,.463,front-.012],[0,.467,front-.016],
+    [.630,.463,front-.012],[.702,.459,front-.009]];
+  blade(ctx,frontGuide,-1,false,.035,.0125);
+  const outerMouth=[[-.675,.307],[-.534,.302],[0,.307],[.534,.302],[.675,.307],
+    [.641,.169],[.475,.164],[-.475,.164],[-.641,.169]];
+  const innerMouth=outerMouth.map(([x,y])=>[x*.968,mix(.234,y,.69)]);
+  patch(ctx,m.lampHousing,(u,t)=>nose((u*2-1)*mix(.664,.688,t),
+    mix(.161,.332,t),.003),[0,0,-1],8,2);
+  facing(ctx,m.black,innerMouth.map(([x,y])=>nose(x,y,.005)),[0,0,-1]);
+  for(let j=0;j<outerMouth.length;j++){
+    const k=(j+1)%outerMouth.length,a=outerMouth[j],b=outerMouth[k],c=innerMouth[k],d=innerMouth[j];
+    facing(ctx,m.trim,[nose(...a,.043),nose(...b,.043),nose(...c,.006),nose(...d,.006)],[0,0,-1]);
+  }
+  const splitter=[[-.710,.151,front-.017],[-.620,.147,front-.060],[0,.153,front-.076],[.620,.147,front-.060],[.710,.151,front-.017]];
+  lightGuide(ctx,splitter,-1,m.trim,.037,.049);
+  if(detailed){
+    for(const x of [-.466,-.252,.252,.466]){
+      const guide=box(ctx,m.lampHousing,nose(x,.235,.017),[.018,.101,.048],.002);
+      guide.rotation.z=-Math.sign(x)*.18;
+    }
+    box(ctx,m.projector,nose(0,.284,.022),[.034,.024,.014],.007);
+  }
   // A deep diffuser rises behind the rear tires; the thin red blade floats
   // beneath the rear deck, with a crease continuing around each corner.
   const tail=(x,y,extra=.006)=>[x,y,rear+extra];
-  for(const s of [-1,1])facing(ctx,m.trim,[tail(s*.908,.680),tail(s*.705,.585),tail(s*.615,.508),
-    tail(s*.620,.278),tail(s*.871,.305),tail(s*.902,.396)],[0,0,1]);
-  facing(ctx,m.black,[tail(-.710,.585),tail(.710,.585),tail(.620,.280),tail(-.620,.280)],[0,0,1]);
-  facing(ctx,m.trim,[tail(-.903,.794),tail(.903,.794),tail(.815,.760),tail(-.815,.760)],[0,0,1]);
-  box(ctx,m.black,[0,.821,rear+.003],[1.802,.058,.026],.005);
-  box(ctx,m.rear,[0,.830,rear+.024],[1.768,.017,.018],.005);
+  patch(ctx,m.paint,(u,t)=>{
+    const v=2*u-1,top=deck(rear,v,0);
+    return blend(tail(v*.904,.783,-.004),top,t);
+  },[0,.04,1],12,2);
+  patch(ctx,m.metal,(u,t)=>tail((2*u-1)*mix(.898,.903,t),mix(.749,.781,t),mix(-.014,.006,t)),[0,.15,1],8,2);
+  patch(ctx,m.paint,(u,t)=>{
+    const q=2*u-1,edge=.573+.105*Math.abs(q)**2;
+    return tail(q*mix(.899,.898,t),mix(edge,.750,t),-.012-.031*(1-t)*(1-q*q));
+  },[0,-.07,1],12,4);
+  const duct=[[-.637,.529],[-.514,.568],[.514,.568],[.637,.529],[.606,.299],[.498,.256],[-.498,.256],[-.606,.299]];
+  // The inner dish sits fourteen centimetres inside the outer lip; the floor
+  // and sidewalls converge into the recess and meet the diffuser strakes.
+  const rim=duct.map(([x,y])=>tail(x,y,.013)),well=duct.map(([x,y])=>tail(x*.865,mix(.406,y,.74),-.143));
+  facing(ctx,m.black,well,[0,0,1]);
+  for(let j=0;j<rim.length;j++){
+    const k=(j+1)%rim.length;
+    facing(ctx,m.lampHousing,[rim[j],rim[k],well[k],well[j]],[0,0,1]);
+  }
+  facing(ctx,m.trim,[tail(-.899,.677,-.011),tail(-.670,.631,-.025),tail(0,.573,-.043),tail(.670,.631,-.025),tail(.899,.677,-.011),
+    rim[3],rim[2],rim[1],rim[0]],[0,0,1]);
   for(const s of [-1,1]){
-    line(ctx,m.rear,[[s*.875,.830,rear+.022],side(s,2.329,.836,.006),side(s,2.255,.85,.005)],.0095);
-    line(ctx,m.front,[[s*.68,.466,front-.015],[s*.731,.487,front+.025]],.009);
+    const edge=(y)=>side(s,rear,y);
+    facing(ctx,m.trim,[edge(.676),tail(s*.637,.529,.013),tail(s*.606,.299,.013),tail(s*.498,.256,.013),
+      edge(.309),edge(.406)],[s*.3,0,1]);
+  }
+  // The curved trailing floor closes the undertray below the fins.
+  patch(ctx,m.trim,(u,t)=>{
+    const x=2*u-1,a=Math.abs(x);
+    return tail(x*mix(.810,.765,t),mix(.199,.218,t)+a*a*.073,
+      mix(-.320,.020,t)-.047*a*a);
+  },[0,1,.15],18,3);
+  patch(ctx,m.lampHousing,(u,t)=>{
+    const x=2*u-1,a=Math.abs(x);
+    return tail(x*.765,.218+a*a*.073-.021*t,.020-.047*a*a-.022*t);
+  },[0,0,1],18,2);
+  const rearGuide=[[-.905,.823,rear+.004],[-.802,.826,rear+.008],[0,.826,rear+.010],[.802,.826,rear+.008],[.905,.823,rear+.004]];
+  blade(ctx,rearGuide,1,true,.080,.018);
+  for(const s of [-1,1]){
+    const marker=[side(s,1.978,.478,.014),side(s,2.080,.514,.014)];
+    line(ctx,m.rearLens,marker,.012);
+    if(detailed){
+      const p=side(s,2.034,.500,.020);box(ctx,m.rear,p,[.006,.010,.031],.002);
+      line(ctx,m.lampHousing,[side(s,2.211,.682,.012),side(s,2.124,.549,.012)],.0045);
+    }
   }
   if(detailed){
-    for(const x of [-.748,-.50,-.22,.22,.50,.748]){
-      const y=.179+.10*Math.abs(x);
-      const fin=box(ctx,m.black,[x,y+.080,rear-.104],[.021,.143,.324],.004);
-      fin.rotation.x=-.105;
+    for(const x of [-.573,-.326,0,.326,.573]){
+      const base=.218+.072*(x/.765)**2,height=.18+(1-Math.abs(x))*.13;
+      const shape=[[base,rear+.025],[base+.022,rear-.255],[base+height,rear-.18],[base+height*.85,rear-.025],[base+.09,rear+.018]];
+      const half=.009;
+      for(const sign of [-1,1])facing(ctx,m.lampHousing,shape.map(([y,z])=>[x+sign*half,y,z]),[sign,0,0]);
+      for(let j=0;j<shape.length;j++){
+        const k=(j+1)%shape.length,a=shape[j],b=shape[k];
+        facing(ctx,m.trim,[[x-half,...a],[x+half,...a],[x+half,...b],[x-half,...b]],[0,0,1]);
+      }
     }
-    box(ctx,m.black,[0,.642,rear+.013],[.422,.132,.030],.008);
-    box(ctx,m.metal,[0,.643,rear+.031],[.390,.105,.009],.006);
-    for(let i=0;i<6;i++)box(ctx,m.black,[(i-2.5)*.040,.642,rear+.038],[.013,.039,.005]);
+    box(ctx,m.black,[0,.642,rear-.016],[.318,.153,.030],.008);
+    box(ctx,m.metal,[0,.643,rear+.002],[.302,.139,.009],.006);
+    for(let i=0;i<6;i++)box(ctx,m.black,[(i-2.5)*.032,.642,rear+.009],[.011,.044,.005]);
   }
-  return {headlights:[[-.575,.465,front-.025],[.575,.465,front-.025]],
-    rearSignals:[[-.867,.830,rear+.025],[.867,.830,rear+.025]]};
+  const lamps=detailed?roadsterHeadlamps(ctx,shell,rows):null;
+  return {headlights:lamps?.anchors??[[-.795,.61,-2.05],[.795,.61,-2.05]],
+    rearSignals:[[-.867,.826,rear+.038],[.867,.826,rear+.038]],deployedHeadlights:lamps?.group};
 }

@@ -10,3 +10,12 @@ Cybertruck — https://www.tesla.com/cybertruck
 Roadster — https://www.tesla.com/roadster
 
 车身和车轮的几何定义见 models/tesla-*.js。可编辑的近景模型合集位于 assets/traffic/tesla-fleet.blend。
+
+轮圈以 Tesla 维修手册中的轮圈、嵌件分解图为参考。Model S 采用 Velarium，Model 3 采用 Nova，Model X 采用 Riptide 搭配 Perihelix 嵌件，Model Y 采用 Helix 2.0。Cybertruck 的七辐轮盖与 Roadster 展示车的轮圈分别建模。
+https://service.tesla.com/docs/ModelS/ServiceManual/Palladium/en-us/GUID-769C9625-76EE-467B-B756-C9032AC2B99A.html
+https://service.tesla.com/docs/Model3/ServiceManual/2024/en-us/GUID-769C9625-76EE-467B-B756-C9032AC2B99A.html
+https://service.tesla.com/docs/ModelX/ServiceManual/Palladium/en-us/GUID-769C9625-76EE-467B-B756-C9032AC2B99A.html
+https://service.tesla.com/docs/ModelY/ServiceManual/2025/en-us/GUID-769C9625-76EE-467B-B756-C9032AC2B99A.html
+https://service.tesla.com/docs/Cybertruck/ServiceManual/en-us/GUID-769C9625-76EE-467B-B756-C9032AC2B99A.html
+
+assets/traffic/reflections/ 中的反射环境均从游戏道路上的车身高度采样，涵盖日景、阴雨、城市雨夜和极光。环境中使用的风景摄影署名见 assets/panorama/credits.txt。

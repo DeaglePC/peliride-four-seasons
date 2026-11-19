@@ -152,5 +152,5 @@ export function createTraffic(THREE, scene) {
     return events;
   }
   reset();
-  return {update,reset,laneOpenForFish};
+  return {update,reset,laneOpenForFish,setReflection:coachbuilder.setReflection};
 }

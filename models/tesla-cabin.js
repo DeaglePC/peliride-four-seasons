@@ -41,9 +41,13 @@ export function addCabin(ctx,type,spec){
     mesh.scale.set(rx,ry,rz);mesh.position.set(x,y,z);ctx.group.add(mesh);
   }
   oval(m.jacket,driverX,headY-.245,headZ-.013,.210,.188,.108);
-  oval(m.skin,driverX,headY,headZ,.084,.111,.094);
-  oval(m.black,driverX,headY+.044,headZ+.013,.087,.076,.091);
+  oval(m.skin,driverX,headY-.108,headZ+.013,.048,.058,.052);
+  oval(m.skin,driverX,headY,headZ,.078,.109,.087);
+  oval(m.skin,driverX,headY-.017,headZ-.076,.023,.027,.026);
+  oval(m.black,driverX,headY+.05,headZ+.014,.081,.063,.083);
+  oval(m.black,driverX,headY+.008,headZ+.060,.074,.060,.049);
   for(const side of [-1,1]){
+    oval(m.skin,driverX+side*.076,headY-.012,headZ+.009,.012,.025,.017);
     const hand=[driverX+side*.112,wheelY+.032,rim.position.z];
     const elbow=[driverX+side*.197,belt+.025,headZ-.182];
     line(ctx,m.jacket,[[driverX+side*.154,headY-.18,headZ-.024],elbow,hand],.041,true);
