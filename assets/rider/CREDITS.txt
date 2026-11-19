@@ -1,0 +1,7 @@
+Brown pelican plumage, face, upper bill and gular pouch textures are adapted
+from "Brown Pelican", Lee Karney / U.S. Fish and Wildlife Service, 2015.
+The source is listed as public domain.
+https://www.fws.gov/media/brown-pelican-7
+
+This asset contains cropped and reprojected photographic details, combined
+with original procedural surface textures for clothing, feet and bicycle.

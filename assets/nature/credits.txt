@@ -1,0 +1,29 @@
+沿途植被与地表素材
+
+植被剪影
+下列 PurePNG 页面将图片列为 CC0（允许商业使用，无需署名）。所列名称为原站投稿者。树冠经裁切、缩放和轻微调色后合入透明纹理图集；部分落叶树另外制作了金黄和橙色秋叶变体。
+• Garden Tree — LPup，https://purepng.com/photo/15141/nature-garden-tree
+• Big Green Tree — LPup，https://purepng.com/photo/15099/nature-big-green-tree
+• Leafy Trees — LPup，https://purepng.com/photo/15168/nature-leafy-trees （从原图分出两株树）
+• Garden Leaf Tree — LPup，https://purepng.com/photo/15135/nature-garden-leaf-tree
+• Spring Tree — LPup，https://purepng.com/photo/15166/nature-spring-tree
+• Cactus — datsvs，https://purepng.com/photo/5802/nature-cactus （仙人掌原图经裁切、缩放和调色）
+• Palm Tree — originalcontent，https://purepng.com/photo/8211/render-palm-tree
+
+• high-res tree textures — rubberduck，CC0 1.0。选取 trees_1K.zip 中 tree_collection_1K.png 的第 1、7 株实拍针叶树，裁切、缩放、调色，并制作两种覆雪变体。https://opengameart.org/content/high-res-tree-textures
+• paramecij's vegetation base texture pack — para，CC0 1.0。使用 vegetation_tree_branch_10.png、vegetation_fern_01.png、vegetation_daisie_05.png，经过裁切、缩放和图集打包；雏菊花头合入原创绘制的草簇。https://opengameart.org/content/paramecijs-vegetation-base-texture-pack
+
+地面与建筑
+以下材质来自 Poly Haven，均使用 CC0 1.0。提取漫反射图并缩放压缩；草甸、沙粒和积雪图另经调色，木纹、瓦片、灰泥和石墙合入建筑表面图集。
+• Leafy Grass — Charlotte Baglioni，https://polyhaven.com/a/leafy_grass
+• Forest Floor — eye-candy.xyz，https://polyhaven.com/a/forest_floor
+• Sand 02 — Charlotte Baglioni，https://polyhaven.com/a/sand_02
+• Snow 02 — Rob Tuytel，https://polyhaven.com/a/snow_02
+• Clay Roof Tiles — Amal Kumar，https://polyhaven.com/a/clay_roof_tiles
+• White Plaster 02 — Rob Tuytel，https://polyhaven.com/a/white_plaster_02
+• Wood Planks Grey — Rob Tuytel，https://polyhaven.com/a/wood_planks_grey
+• Old Stone Wall 02 — Charlotte Baglioni，https://polyhaven.com/a/old_stone_wall_02
+
+• Concrete Pavement 02 — Charlotte Baglioni，https://polyhaven.com/a/concrete_pavement_02
+• Dark Brick Wall — Dario Barresi, Dimitrios Savva，https://polyhaven.com/a/dark_brick_wall
+CC0 1.0 许可：https://creativecommons.org/publicdomain/zero/1.0/

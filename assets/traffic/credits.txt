@@ -1,0 +1,21 @@
+Vehicle meshes by tevy, released under Creative Commons CC0 1.0 Universal.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Family Sedan, version 1
+https://tevy.dev/models/family-sedan
+https://tevy.dev/models/family-sedan/v1/lod1.glb
+https://tevy.dev/models/family-sedan/v1/lod2.glb
+
+Family Minivan, version 1
+https://tevy.dev/models/family-minivan
+https://tevy.dev/models/family-minivan/v1/lod1.glb
+https://tevy.dev/models/family-minivan/v1/lod2.glb
+
+High-Roof Delivery Van, version 1
+https://tevy.dev/models/delivery-van
+https://tevy.dev/models/delivery-van/v1/lod1.glb
+https://tevy.dev/models/delivery-van/v1/lod2.glb
+
+Local adaptations remove image textures and unused attributes, batch mesh
+primitives, preserve the wheel pivots, orient the vehicles to the track and
+apply dynamic automotive paint, reflective glazing, and emissive lighting.

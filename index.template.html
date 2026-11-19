@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#171e20">
+  <link rel="icon" href="data:,">
+  <title>鹈鹕骑行社 · 四季公路</title>
+  <style>/* APP_STYLE */</style>
+</head>
+<body>
+  <main id="app" data-state="home">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 54 42"><path fill="currentColor" d="M4 32c5.8-1 9-4.5 12-10.3L21 12c3.1-5.9 7.8-8.5 12.8-7.7 3.4.5 5.5 2.2 6.4 5L52 13.1c-4.2 4.2-9.4 5.3-15.9 3.9l-7.4 11c-4 5.7-10.8 9.1-20.9 8.5l5.5-4.1z"/><path d="M32 12c3 1.5 8.2 2.2 14.5 1.6M13 30c5.5-.6 10.6-3.6 14.8-8.4" fill="none" stroke="#f9f7e8" stroke-width="1.5" stroke-linecap="round"/><circle cx="35.6" cy="9.3" r="1.2" fill="#f9f7e8"/></svg></span><span><b>PELI<span>RIDE</span></b><small>鹈 鹕 骑 行 社</small></span></div>
+      <nav aria-label="主导航"><button class="nav active" data-action="ride"><i data-icon="bike"></i><span>骑行</span></button><button class="nav" data-action="map"><i data-icon="map"></i><span>路线图</span></button><button class="nav" data-action="wardrobe"><i data-icon="shirt"></i><span>骑行衣橱</span></button></nav>
+      <div class="top-tools"><button class="iconbtn" data-action="sound" aria-label="开启声音" title="开启声音"><i data-icon="muted"></i></button><button class="iconbtn" data-action="help" aria-label="操作指南" title="操作指南"><i data-icon="help"></i></button></div>
+    </header>
+    <section class="vista" aria-label="三维骑行场景">
+      <canvas id="scene" aria-label="鹈鹕与自行车、车流及四季风景"></canvas>
+      <div class="hero-shade"></div>
+      <div class="hero">
+        <div class="tour-tag"><span class="tour-dash"></span> THE FOUR SEASONS TOUR</div>
+        <h1>四季公路<span>.</span></h1>
+        <p class="hero-sub">骑上单车，跟着鹈鹕穿过一年四季。</p>
+        <button class="start" data-action="start"><i data-icon="play"></i>开始骑行</button>
+      </div>
+      <div class="weather-wrap"><button class="weather-pill" data-action="weather" aria-haspopup="dialog"><i id="weather-symbol" data-icon="sun"></i><span id="weather-text">晴朗</span><span class="pill-line"></span><b id="temperature">18°</b><i class="tiny" data-icon="chevron"></i></button></div>
+      <div class="location"><i data-icon="pin"></i><div><small id="location-en">ALPINE MEADOWS</small><strong id="location-cn">高山花甸</strong></div></div>
+      <div class="camera-tools"><button class="glass-btn" data-action="immersive" aria-pressed="false" aria-label="沉浸模式" title="沉浸模式 F"><i data-icon="expand"></i></button><button class="glass-btn" data-action="camera" aria-label="切换机位" title="切换机位 C"><i data-icon="camera"></i></button><button class="glass-btn" data-action="pause" id="pause-btn" aria-label="暂停骑行" title="暂停骑行"><i data-icon="pause"></i></button></div>
+      <div class="ride-hud"><div class="speed"><b id="speed">0</b><span>KM/H</span></div><div class="dashboard"><span id="mileage">0.00 km</span><span class="hearts" id="hearts">♥ ♥ ♥</span><div class="meter"><span id="meter-fill"></span></div><div id="fish-readout" hidden><span id="fish-count">接鱼 0</span><strong id="fish-lane"></strong></div></div></div>
+      <div id="notice" role="status"></div>
+      <div class="touch"><button data-touch="left" aria-label="左移"><i data-icon="left"></i></button><button data-touch="right" aria-label="右移"><i data-icon="right"></i></button><span></span><button data-touch="brake" aria-label="刹车"><i data-icon="brake"></i></button><button data-touch="boost" aria-label="加速"><i data-icon="boost"></i></button></div>
+      <div class="problem" id="world-error" hidden></div>
+    </section>
+    <section class="route-strip" aria-label="四季路线">
+      <div class="route-heading">
+        <div><i data-icon="route"></i><h2>四季环线</h2><span class="meta">8 段风景 <em>·</em> 4.16 km</span></div>
+        <div class="route-tools">
+          <nav class="project-links" aria-label="项目与作者">
+            <a href="https://github.com/DeaglePC/peliride-four-seasons" target="_blank" rel="noopener noreferrer" aria-label="打开游戏的 GitHub 仓库（新标签页）">GitHub<span class="repo-label"> 仓库</span></a>
+            <a href="https://x.com/deaglepc" target="_blank" rel="noopener noreferrer" aria-label="打开作者的 X 主页 @deaglepc（新标签页）">X <span>@deaglepc</span></a>
+          </nav>
+          <button class="text-btn" data-action="map">全程路书 <i data-icon="map"></i></button>
+        </div>
+      </div>
+      <div id="seasons" class="seasons"></div>
+    </section>
+    <dialog id="panel"><div class="panel-head"><div><small id="panel-en"></small><h2 id="panel-title"></h2></div><button data-action="close" class="iconbtn" aria-label="关闭"><i data-icon="x"></i></button></div><div id="panel-body"></div></dialog>
+  </main>
+  <script>/* APP_SCRIPT */</script>
+</body>
+</html>

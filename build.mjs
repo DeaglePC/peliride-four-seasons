@@ -1,0 +1,15 @@
+import {build} from 'esbuild';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=dirname(fileURLToPath(import.meta.url));
+const fromRoot=createRequire(import.meta.url);
+const assetLoaders=Object.fromEntries(['.jpg','.jpeg','.png','.webp','.hdr','.glb'].map(ext=>[ext,'dataurl']));
+assetLoaders['.txt']='text';
+const bundle=await build({entryPoints:[resolve(root,'game.js')],bundle:true,minify:true,format:'iife',legalComments:'inline',loader:assetLoaders,write:false,target:'es2020'});
+const [page,style,license]=await Promise.all([readFile(resolve(root,'index.template.html'),'utf8'),readFile(resolve(root,'style.css'),'utf8'),readFile(resolve(dirname(fromRoot.resolve('three')),'../LICENSE'),'utf8')]);
+const result=page.replace('/* APP_STYLE */',()=>style).replace('/* APP_SCRIPT */',()=>('/* Three.js license\n'+license+'\n*/\n'+bundle.outputFiles[0].text).replace(/<\/script/gi,'<\\/script'));
+await mkdir(resolve(root,'dist'),{recursive:true});
+await writeFile(resolve(root,'dist/index.html'),result);
+console.log('Built standalone dist/index.html ('+(Buffer.byteLength(result)/1024).toFixed(0)+' KiB)');
