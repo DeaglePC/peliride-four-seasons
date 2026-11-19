@@ -6,6 +6,29 @@
   <meta name="theme-color" content="#171e20">
   <link rel="icon" href="data:,">
   <title>鹈鹕骑行社 · 四季公路</title>
+  <!-- GitHub mark from Primer Octicons.
+MIT License
+
+Copyright (c) 2026 GitHub Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+  -->
   <style>/* APP_STYLE */</style>
 </head>
 <body>
@@ -13,7 +36,14 @@
     <header class="topbar">
       <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 54 42"><path fill="currentColor" d="M4 32c5.8-1 9-4.5 12-10.3L21 12c3.1-5.9 7.8-8.5 12.8-7.7 3.4.5 5.5 2.2 6.4 5L52 13.1c-4.2 4.2-9.4 5.3-15.9 3.9l-7.4 11c-4 5.7-10.8 9.1-20.9 8.5l5.5-4.1z"/><path d="M32 12c3 1.5 8.2 2.2 14.5 1.6M13 30c5.5-.6 10.6-3.6 14.8-8.4" fill="none" stroke="#f9f7e8" stroke-width="1.5" stroke-linecap="round"/><circle cx="35.6" cy="9.3" r="1.2" fill="#f9f7e8"/></svg></span><span><b>PELI<span>RIDE</span></b><small>鹈 鹕 骑 行 社</small></span></div>
       <nav aria-label="主导航"><button class="nav active" data-action="ride"><i data-icon="bike"></i><span>骑行</span></button><button class="nav" data-action="map"><i data-icon="map"></i><span>路线图</span></button><button class="nav" data-action="wardrobe"><i data-icon="shirt"></i><span>骑行衣橱</span></button></nav>
-      <div class="top-tools"><button class="iconbtn" data-action="sound" aria-label="开启声音" title="开启声音"><i data-icon="muted"></i></button><button class="iconbtn" data-action="help" aria-label="操作指南" title="操作指南"><i data-icon="help"></i></button></div>
+      <div class="top-tools">
+        <button class="iconbtn" data-action="sound" aria-label="开启声音" title="开启声音"><i data-icon="muted"></i></button>
+        <button class="iconbtn" data-action="help" aria-label="操作指南" title="操作指南"><i data-icon="help"></i></button>
+        <nav class="project-links" aria-label="项目与作者">
+          <a href="https://github.com/DeaglePC/peliride-four-seasons" target="_blank" rel="noopener noreferrer" title="GitHub 仓库" aria-label="打开游戏的 GitHub 仓库（新标签页）"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"/></svg></a>
+          <a href="https://x.com/deaglepc" target="_blank" rel="noopener noreferrer" title="X · @deaglepc" aria-label="打开作者的 X 主页 @deaglepc（新标签页）"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg></a>
+        </nav>
+      </div>
     </header>
     <section class="vista" aria-label="三维骑行场景">
       <canvas id="scene" aria-label="鹈鹕与自行车、车流及四季风景"></canvas>
@@ -35,13 +65,7 @@
     <section class="route-strip" aria-label="四季路线">
       <div class="route-heading">
         <div><i data-icon="route"></i><h2>四季环线</h2><span class="meta">8 段风景 <em>·</em> 4.16 km</span></div>
-        <div class="route-tools">
-          <nav class="project-links" aria-label="项目与作者">
-            <a href="https://github.com/DeaglePC/peliride-four-seasons" target="_blank" rel="noopener noreferrer" aria-label="打开游戏的 GitHub 仓库（新标签页）">GitHub<span class="repo-label"> 仓库</span></a>
-            <a href="https://x.com/deaglepc" target="_blank" rel="noopener noreferrer" aria-label="打开作者的 X 主页 @deaglepc（新标签页）">X <span>@deaglepc</span></a>
-          </nav>
-          <button class="text-btn" data-action="map">全程路书 <i data-icon="map"></i></button>
-        </div>
+        <button class="text-btn" data-action="map">全程路书 <i data-icon="map"></i></button>
       </div>
       <div id="seasons" class="seasons"></div>
     </section>
