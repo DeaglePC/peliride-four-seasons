@@ -1,21 +1,12 @@
-Vehicle meshes by tevy, released under Creative Commons CC0 1.0 Universal.
-https://creativecommons.org/publicdomain/zero/1.0/
+PeliRide · 公路车流
 
-Family Sedan, version 1
-https://tevy.dev/models/family-sedan
-https://tevy.dev/models/family-sedan/v1/lod1.glb
-https://tevy.dev/models/family-sedan/v1/lod2.glb
+六款车的车身、座舱、轮圈和灯组均为本项目独立制作的 3D 网格。建模参考了 Tesla 官方车型照片与车主手册中的外形尺寸。Roadster 采用官网展示版本的外观与估算比例。
 
-Family Minivan, version 1
-https://tevy.dev/models/family-minivan
-https://tevy.dev/models/family-minivan/v1/lod1.glb
-https://tevy.dev/models/family-minivan/v1/lod2.glb
+Model S — https://www.tesla.com/models
+Model 3 — https://www.tesla.com/model3
+Model X — https://www.tesla.com/modelx
+Model Y — https://www.tesla.com/modely
+Cybertruck — https://www.tesla.com/cybertruck
+Roadster — https://www.tesla.com/roadster
 
-High-Roof Delivery Van, version 1
-https://tevy.dev/models/delivery-van
-https://tevy.dev/models/delivery-van/v1/lod1.glb
-https://tevy.dev/models/delivery-van/v1/lod2.glb
-
-Local adaptations remove image textures and unused attributes, batch mesh
-primitives, preserve the wheel pivots, orient the vehicles to the track and
-apply dynamic automotive paint, reflective glazing, and emissive lighting.
+车身和车轮的几何定义见 models/tesla-*.js。可编辑的近景模型合集位于 assets/traffic/tesla-fleet.blend。

@@ -1,4 +1,4 @@
-import {createCoachbuilder} from './vehicle-coachwork.js';
+import {createCoachbuilder,modelIds} from './vehicle-coachwork.js';
 import {roadHeight,grade} from '../elevation.js';
 // Traffic moves along the same distance coordinate as the road. Each direction
 // has a common cruising speed, so vehicles in a stream keep their spacing.
@@ -17,7 +17,7 @@ export function createTraffic(THREE, scene) {
     group.add(root);
     cars.push({root,garage:new Map(),active:false});
   }
-  let seed=1, priorDistance=0, initialFrame=true;
+  let seed=1, priorDistance=0, initialFrame=true, upcoming=[];
   function random() {
     seed = (Math.imul(seed,1664525)+1013904223)>>>0;
     return seed/4294967296;
@@ -25,9 +25,8 @@ export function createTraffic(THREE, scene) {
   function place(direction, at, type, palette, startLane, mayChange=false) {
     const car=cars.find(item=>!item.active);
     if(!car) return;
-    const key=type+':'+palette;
-    if(!car.garage.has(key))car.garage.set(key,coachbuilder.build(type,palette));
-    const template=car.garage.get(key);
+    if(!car.garage.has(type))car.garage.set(type,coachbuilder.build(type,palette));
+    const template=car.garage.get(type);template.repaint(palette);
     if(car.template)car.root.remove(car.template.root);
     car.root.add(template.root);
     Object.assign(car,{active:true, at, direction, startLane, template, mayChange, previousAlong:null,previousAcross:0,
@@ -35,8 +34,13 @@ export function createTraffic(THREE, scene) {
     car.root.visible=false;
   }
   function generated(direction,at) {
-    const r=random();
-    const type=r<.43?'compact':r<.72?'van':'camper';
+    if(!upcoming.length){
+      upcoming=[...modelIds,'model3','modelY'];
+      for(let i=upcoming.length-1;i>0;i--){
+        const j=Math.floor(random()*(i+1));[upcoming[i],upcoming[j]]=[upcoming[j],upcoming[i]];
+      }
+    }
+    const type=upcoming.pop();
     const palette=Math.floor(random()*coachbuilder.paletteCount(type));
     const startLane=direction<0?-1:random()<.55?1:0;
     place(direction,at,type,palette,startLane,direction>0&&random()<.62);
@@ -44,12 +48,16 @@ export function createTraffic(THREE, scene) {
   function reset(distance=0) {
     for(const car of cars){ car.active=false; car.root.visible=false; }
     seed=(0x8f39cd2a+Math.floor(distance/17))>>>0;
-    priorDistance=distance; initialFrame=true;
-    place(-1,distance+24,'camper',0,-1);
-    place(1,distance+57,'compact',0,1);
-    place(-1,distance+105,'compact',1,-1);
-    place(1,distance+138,'van',1,0,true);
-    place(-1,distance+181,'van',0,-1);
+    priorDistance=distance; initialFrame=true;upcoming=[];
+    const opening=['cybertruck','model3','modelX','modelY','roadster','modelS'];
+    const leg=Math.floor(distance/520),layout=[
+      [-1,24,-1],[1,57,1],[-1,105,-1],[1,138,0],[-1,181,-1],[1,213,1]
+    ];
+    layout.forEach(([direction,gap,startLane],i)=>{
+      const type=opening[(i+leg)%opening.length];
+      const palette=i===0?0:(i+leg)%coachbuilder.paletteCount(type);
+      place(direction,distance+gap,type,palette,startLane,i===3);
+    });
   }
   function fillStream(direction, distance) {
     let farthest=distance+30;
@@ -92,7 +100,7 @@ export function createTraffic(THREE, scene) {
       const lateral=x-riderX,squaredDistance=rel*rel+lateral*lateral;
       if(squaredDistance<closestSound){
         closestSound=squaredDistance;
-        events.audible={x:lateral,z:rel,direction:car.direction};
+        events.audible={x:lateral,z:rel,direction:car.direction,speed:Math.abs(velocity)};
       }
       car.root.position.set(x,roadHeight(car.at)-roadHeight(distance),-rel);
       car.root.visible=true;

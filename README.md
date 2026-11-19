@@ -8,7 +8,15 @@
 
 ![高山花甸实机录屏：鹈鹕加速变道，撞上迎面驶来的车，被甩出车座，落地翻滚后重新上车。](docs/media/alpine-ride.gif)
 
-上面这次翻车发生在高山花甸。看左上角的速度和体力，再看单车与鹈鹕分别落在了哪里。完整录屏还拍到了海岸接鱼、都市雨夜和雪地极光。[下载约 17 秒的 720p 实机录像（MP4，无声）](https://github.com/DeaglePC/peliride-four-seasons/raw/refs/heads/main/docs/media/four-seasons-ride.mp4?download=1)
+上面这次翻车发生在高山花甸。鹈鹕加速切进对向车道，撞上了一辆 Cybertruck。留意单车和鹈鹕分别落在了哪里。完整录屏还拍到了海岸接鱼、都市雨夜和雪地极光。[下载约 17 秒的 720p 实机录像（MP4，无声）](https://github.com/DeaglePC/peliride-four-seasons/raw/refs/heads/main/docs/media/four-seasons-ride.mp4?download=1)
+
+## 路上的特斯拉
+
+![游戏车模前侧视图，上排为 Model S、Model 3、Model X，下排为 Model Y、Cybertruck、Roadster。](docs/media/tesla-traffic.jpg)
+
+六款车都在双向车流里出现。白天可以从轮廓认车，夜里可以看灯：Model 3 是两枚细长的独立前灯，焕新版 Model Y 用贯穿灯带，Cybertruck 的平直车头和货斗从远处就能认出来。会变道的车会提前打转向灯；会车时，车身更宽的 Cybertruck 也确实需要多留一点横向间距。
+
+上图直接渲染自游戏模型。车身曲面、轮拱、车窗和轮圈均按 Tesla 官方外观资料独立建模，Roadster 采用官网展示车的造型。Blender 文件里六款车分别编组，四个车轮都有独立转轴。[下载可编辑的 Blender 车模合集](https://github.com/DeaglePC/peliride-four-seasons/raw/refs/heads/main/assets/traffic/tesla-fleet.blend?download=1) · [官方车型参考](assets/traffic/credits.txt)
 
 ## 骑过四季
 

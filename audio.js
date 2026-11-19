@@ -1,5 +1,5 @@
 export function rideAudio() {
-  let ctx, master, surface, air, traffic, engine, exhaust, tyres, pan, contactNoise;
+  let ctx, master, surface, air, traffic, motor, motorLevel, tyres, pan, contactNoise;
   let enabled = false;
 
   function connectNoise(output, frequency, q) {
@@ -37,16 +37,13 @@ export function rideAudio() {
     traffic.gain.value = 0;
     pan = ctx.createStereoPanner();
     traffic.connect(pan).connect(master);
-    exhaust = ctx.createBiquadFilter();
-    exhaust.type = 'lowpass';
-    exhaust.frequency.value = 190;
-    exhaust.Q.value = .55;
-    const harmonics = ctx.createPeriodicWave(new Float32Array(6), new Float32Array([0, .82, .21, .15, .31, .08]));
-    engine = ctx.createOscillator();
-    engine.setPeriodicWave(harmonics);
-    engine.frequency.value = 58;
-    engine.connect(exhaust).connect(traffic);
-    engine.start();
+    motorLevel = ctx.createGain();
+    motorLevel.gain.value = .08;
+    motor = ctx.createOscillator();
+    motor.setPeriodicWave(ctx.createPeriodicWave(new Float32Array(5), new Float32Array([0, .75, .10, .028, .012])));
+    motor.frequency.value = 160;
+    motor.connect(motorLevel).connect(traffic);
+    motor.start();
     tyres = ctx.createGain();
     tyres.gain.value = .31;
     tyres.connect(traffic);
@@ -100,12 +97,12 @@ export function rideAudio() {
       if (!riding || !car) { traffic.gain.setTargetAtTime(0, t, .13); return; }
       const range = Math.hypot(car.x, car.z);
       const passing = 1 / (1 + (range / 5.5) ** 2);
-      const pitch = Math.tanh(car.z / 4) * (car.direction < 0 ? 12 : 4);
-      engine.frequency.setTargetAtTime((car.direction < 0 ? 66 : 51) + pitch, t, .075);
-      exhaust.frequency.setTargetAtTime(140 + passing * 150, t, .1);
+      const closingSpeed=(speed-car.direction*car.speed)*Math.tanh(car.z/4);
+      motor.frequency.setTargetAtTime((141+car.speed*12)*343/(343-closingSpeed),t,.085);
+      motorLevel.gain.setTargetAtTime(.018+.012*car.speed,t,.14);
       pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, car.x / (2 + range * .22))), t, .07);
       traffic.gain.setTargetAtTime(passing * .12, t, .07);
-      tyres.gain.setTargetAtTime(rain ? .77 : .30, t, .2);
+      tyres.gain.setTargetAtTime((rain ? .81 : .45)*Math.min(1,car.speed/3.5),t,.2);
     }
   };
 }
